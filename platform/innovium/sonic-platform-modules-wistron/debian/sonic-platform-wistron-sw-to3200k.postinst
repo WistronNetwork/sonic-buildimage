@@ -33,6 +33,8 @@ fi
 
 systemctl enable platform-modules-sw-to3200k.service
 systemctl start platform-modules-sw-to3200k.service
+systemctl enable sw-to3200k-firmware_ver.service
+systemctl start sw-to3200k-firmware_ver.service
 systemctl enable to3200k-platform.service
 systemctl start to3200k-platform.service
 systemctl enable to3200k-led.service

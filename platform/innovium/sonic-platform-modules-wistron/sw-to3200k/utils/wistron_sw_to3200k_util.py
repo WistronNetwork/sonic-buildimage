@@ -284,12 +284,6 @@ def do_install():
     else:
         print(PROJECT_NAME.upper()+" devices detected....")
 
-    status, output = log_os_system(
-        "/bin/sh /usr/local/bin/platform_api_mgnt.sh init", 1)
-    if status:
-            print(output)
-            if FORCE == 0:
-                return status
     return
 
 def do_uninstall():

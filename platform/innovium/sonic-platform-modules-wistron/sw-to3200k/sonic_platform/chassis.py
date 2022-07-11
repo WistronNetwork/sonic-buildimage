@@ -16,9 +16,11 @@ except ImportError as e:
     raise ImportError(str(e) + "- required module not found")
 
 NUM_FAN = 14
+NUM_FANTRAY = 7
 NUM_PSU = 2
 NUM_THERMAL = 7
 NUM_SFP = 32
+NUM_COMPONENT = 6
 HOST_REBOOT_CAUSE_PATH = "/host/reboot-cause/"
 PMON_REBOOT_CAUSE_PATH = "/usr/share/sonic/platform/api_files/reboot-cause/"
 REBOOT_CAUSE_FILE = "reboot-cause.txt"
@@ -45,6 +47,7 @@ class Chassis(ChassisBase):
         self.__initialize_thermals()
         self.__initialize_sfp()
         self.__initialize_eeprom()
+        self.__initialize_components()
 
     def __initialize_sfp(self):
         from sonic_platform.sfp import Sfp
@@ -52,12 +55,12 @@ class Chassis(ChassisBase):
             sfp_module = Sfp(index, 'QSFP_DD')
             self._sfp_list.append(sfp_module)
 
-
     def __initialize_fan(self):
-        from sonic_platform.fan import Fan
-        for fan_index in range(0, NUM_FAN):
-            fan = Fan(fan_index)
-            self._fan_list.append(fan)
+        from sonic_platform.fan_drawer import FanDrawer
+        for fan_index in range(0, NUM_FANTRAY):
+            fandrawer = FanDrawer(fan_index)
+            self._fan_drawer_list.append(fandrawer)
+            self._fan_list.extend(fandrawer._fan_list)
 
     def __initialize_psu(self):
         from sonic_platform.psu import Psu
@@ -74,6 +77,12 @@ class Chassis(ChassisBase):
     def __initialize_eeprom(self):
         from sonic_platform.eeprom import Tlv
         self._eeprom = Tlv()
+
+    def __initialize_components(self):
+        from sonic_platform.component import Component
+        for index in range(0, NUM_COMPONENT):
+            component = Component(index)
+            self._component_list.append(component)
 
     def __is_host(self):
         return os.system(HOST_CHK_CMD) == 0

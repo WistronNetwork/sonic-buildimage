@@ -426,7 +426,7 @@ class Sfp(SfpBase):
             if qsfp_dom_capability_raw is not None:
                 qsfp_version_compliance_raw = self._read_eeprom_specific_bytes(QSFP_VERSION_COMPLIANCE_OFFSET, QSFP_VERSION_COMPLIANCE_WIDTH)
                 qsfp_version_compliance = int(qsfp_version_compliance_raw[0], 16)
-                dom_capability = sfpi_obj.parse_qsfp_dom_capability(qsfp_dom_capability_raw, 0)
+                dom_capability = sfpi_obj.parse_dom_capability(qsfp_dom_capability_raw, 0)
                 if qsfp_version_compliance >= 0x08:
                     self.dom_temp_supported = dom_capability['data']['Temp_support']['value'] == 'On'
                     self.dom_volt_supported = dom_capability['data']['Voltage_support']['value'] == 'On'
@@ -466,7 +466,7 @@ class Sfp(SfpBase):
             # two types of QSFP-DD cable types supported: Copper and Optical.
             qsfp_dom_capability_raw = self._read_eeprom_specific_bytes(QSFP_DD_FLAT_MEM['offset'], QSFP_DD_FLAT_MEM['width'], QSFP_DD_FLAT_MEM['page'])
             if qsfp_dom_capability_raw is not None:
-                dom_capability = sfpi_obj.parse_qsfp_dom_capability(qsfp_dom_capability_raw, 0)
+                dom_capability = sfpi_obj.parse_dom_capability(qsfp_dom_capability_raw, 0)
                 if dom_capability['data']['Flat_MEM']['value'] == 'Off':
 
                     ext_dd = ext_qsfp_dd()

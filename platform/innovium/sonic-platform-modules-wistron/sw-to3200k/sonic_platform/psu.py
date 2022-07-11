@@ -28,6 +28,14 @@ class Psu(PsuBase):
         self.PSU_OUTPUT_VOLTAGE_MAX = 12600
         self.index = psu_index
         PsuBase.__init__(self)
+        self.__initialize_fan()
+
+    def __initialize_fan(self):
+        from sonic_platform.fan import Fan
+        for fan_index in range(0, 1):
+                fan = Fan(fan_index, 0, is_psu_fan=True, psu_index=self.index)
+                self._fan_list.append(fan)
+
 
     def __read_txt_file(self, file_path):
         try:
@@ -84,7 +92,7 @@ class Psu(PsuBase):
             bool: True if PSU is present, False if not
         """
         attr_file ='psu_present'
-        attr_path = self.SYSFS_PSU_DIR[self.index-1] +'/' + attr_file
+        attr_path = self.SYSFS_PSU_DIR[self.index] +'/' + attr_file
         status = 0
         try:
             with open(attr_path, 'r') as psu_prs:
@@ -101,7 +109,7 @@ class Psu(PsuBase):
             A boolean value, True if device is operating properly, False if not
         """
         attr_file = 'psu_power_good'
-        attr_path = self.SYSFS_PSU_DIR[self.index-1] +'/' + attr_file
+        attr_path = self.SYSFS_PSU_DIR[self.index] +'/' + attr_file
         status = 0
         try:
             with open(attr_path, 'r') as power_status:
@@ -120,7 +128,7 @@ class Psu(PsuBase):
         try:
             if self.get_presence():
                 attr_file = 'psu_model_name'
-                attr_path = self.SYSFS_PSU_DIR[self.index-1] +'/' + attr_file
+                attr_path = self.SYSFS_PSU_DIR[self.index] +'/' + attr_file
                 val = self.__read_txt_file(attr_path)
                 return str(val)
         except Exception as e:
@@ -137,7 +145,7 @@ class Psu(PsuBase):
         try:
             if self.get_presence():
                 attr_file = 'psu_serial_number'
-                attr_path = self.SYSFS_PSU_DIR[self.index-1] +'/' + attr_file
+                attr_path = self.SYSFS_PSU_DIR[self.index] +'/' + attr_file
                 val = self.__read_txt_file(attr_path)
                 return str(val)
         except Exception as e:
@@ -154,7 +162,7 @@ class Psu(PsuBase):
         try:
             if self.get_presence():
                 attr_file = 'psu_v_out'
-                attr_path = self.STATUS_PSU_DIR[self.index-1] +'/' + attr_file
+                attr_path = self.STATUS_PSU_DIR[self.index] +'/' + attr_file
                 val = self.__read_txt_file(attr_path)
                 return int(val)
         except Exception as e:
@@ -171,7 +179,7 @@ class Psu(PsuBase):
         try:
             if self.get_presence():
                 attr_file = 'psu_i_out'
-                attr_path = self.STATUS_PSU_DIR[self.index-1] +'/' + attr_file
+                attr_path = self.STATUS_PSU_DIR[self.index] +'/' + attr_file
                 val = self.__read_txt_file(attr_path)
                 return int(val)
         except Exception as e:
@@ -188,7 +196,7 @@ class Psu(PsuBase):
         try:
             if self.get_presence():
                 attr_file = 'psu_p_out'
-                attr_path = self.STATUS_PSU_DIR[self.index-1] +'/' + attr_file
+                attr_path = self.STATUS_PSU_DIR[self.index] +'/' + attr_file
                 val = self.__read_txt_file(attr_path)
                 return int(val)
         except Exception as e:
@@ -221,7 +229,7 @@ class Psu(PsuBase):
         try:
             if self.get_presence():
                 attr_file = 'psu_temp1_input'
-                attr_path = self.STATUS_PSU_DIR[self.index-1] +'/' + attr_file
+                attr_path = self.STATUS_PSU_DIR[self.index] +'/' + attr_file
                 val = self.__read_txt_file(attr_path)
                 return int(val)
         except Exception as e:

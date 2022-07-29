@@ -11,7 +11,7 @@ except ImportError as e:
     raise ImportError(str(e) + "- required module not found")
 
 FANS_PER_FANTRAY = 2
-
+MAX_FAN_WATT = 20.0
 
 class FanDrawer(FanDrawerBase):
     """Platform-specific Fan class"""
@@ -69,6 +69,16 @@ class FanDrawer(FanDrawerBase):
         """
         return self._fan_list[0].get_status()
 
+    def set_status_led(self, color):
+        """
+        Sets the state of the fan drawer status LED
+        Args:
+            color: A string representing the color with which to set the
+                   fan drawer status LED
+        Returns:
+            bool: True if status LED state is set successfully, False if not
+        """
+        return self._fan_list[0].set_status_led(color)
     def get_status_led(self):
         """
         Gets the state of the fan drawer LED
@@ -97,3 +107,13 @@ class FanDrawer(FanDrawerBase):
             bool: True if it is replaceable.
         """
         return True
+
+    def get_maximum_consumed_power(self):
+        """
+        Retrives the maximum power drawn by Fan Drawer
+        Returns:
+            A float, with value of the maximum consumable power of the
+            component.
+        """
+        return MAX_FAN_WATT
+

@@ -11,6 +11,8 @@ try:
     from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_InterfaceId
     from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_Dom
     from sonic_platform_base.sonic_sfp.sffbase import sffbase
+    from sonic_platform_base.sonic_sfp.sff8024 import type_abbrv_name
+    from sonic_platform_base.sonic_sfp.sff8024 import type_of_media_interface
     from sonic_py_common.logger import Logger
     import sys
 except ImportError as e:
@@ -277,6 +279,7 @@ class Sfp(SfpBase):
         # Init index
         self.index = sfp_index
         self.port_num = self.index + 1
+        self.abbrv = None
 
         # Init eeprom path
         eeprom_low_path = '/sys/bus/i2c/devices/0-00{}/eeprom_low'
@@ -383,8 +386,10 @@ class Sfp(SfpBase):
         if eeprom_raw:
             if eeprom_raw[0] in QSFP_TYPE_CODE_LIST:
                 self.sfp_type = QSFP_TYPE
+                self.abbrv = type_abbrv_name[eeprom_raw[0]]
             elif eeprom_raw[0] in QSFP_DD_TYPE_CODE_LIST:
                 self.sfp_type = QSFP_DD_TYPE
+                self.abbrv = type_abbrv_name[eeprom_raw[0]]
             else:
                 # we don't regonize this identifier value, treat the xSFP module as the default type
                 self.sfp_type = sfp_type
@@ -395,6 +400,7 @@ class Sfp(SfpBase):
             # eeprom_raw being None indicates the module is not present.
             # in this case we treat it as the default type according to the SKU
             self.sfp_type = sfp_type
+            self.abbrv = type_abbrv_name['18']
 
     def _dom_capability_detect(self):
 
@@ -462,6 +468,8 @@ class Sfp(SfpBase):
 
             self.dom_temp_supported = True
             self.dom_volt_supported = True
+            self.dom_rx_tx_power_bias_supported = False
+            self.dom_tx_bias_power_supported = True
 
             # two types of QSFP-DD cable types supported: Copper and Optical.
             qsfp_dom_capability_raw = self._read_eeprom_specific_bytes(QSFP_DD_FLAT_MEM['offset'], QSFP_DD_FLAT_MEM['width'], QSFP_DD_FLAT_MEM['page'])
@@ -534,8 +542,18 @@ class Sfp(SfpBase):
         application_advertisement  |1*255VCHAR     |supported applications advertisement
         ================================================================================
         """
+        info_dict_keys = [
+        'type', 'hardware_rev', 'serial', 'manufacturer',
+        'model', 'connector', 'encoding', 'ext_identifier',
+        'ext_rateselect_compliance', 'cable_type', 'cable_length',
+        'nominal_bit_rate', 'specification_compliance', 'vendor_date',
+        'vendor_oui', 'application_advertisement', 'type_abbrv_name']
+
         transceiver_info_dict = {}
         compliance_code_dict = {}
+        transceiver_info_dict = dict.fromkeys(info_dict_keys, "NA")
+        transceiver_info_dict["specification_compliance"] = '{}'
+        transceiver_info_dict['type_abbrv_name'] = self.abbrv
 
         #QSFP
         if self.sfp_type == QSFP_TYPE:
@@ -684,6 +702,7 @@ class Sfp(SfpBase):
                 if sfp_media_type_dict is None:
                     return None
 
+                transceiver_info_dict['specification_compliance'] = type_of_media_interface[sfp_media_type_raw[0]]
                 host_media_list = ""
                 sfp_application_type_first_list = self._read_eeprom_specific_bytes((XCVR_FIRST_APPLICATION_LIST_OFFSET_QSFP_DD), XCVR_FIRST_APPLICATION_LIST_WIDTH_QSFP_DD)
                 possible_application_count = 8
@@ -711,7 +730,6 @@ class Sfp(SfpBase):
             transceiver_info_dict['encoding'] = "Not supported for CMIS cables"
             transceiver_info_dict['ext_identifier'] = str(sfp_ext_identifier_data['data']['Extended Identifier']['value'])
             transceiver_info_dict['ext_rateselect_compliance'] = "Not supported for CMIS cables"
-            transceiver_info_dict['specification_compliance'] = "Not supported for CMIS cables"
             transceiver_info_dict['cable_type'] = "Length Cable Assembly(m)"
             transceiver_info_dict['cable_length'] = str(sfp_cable_len_data['data']['Length Cable Assembly(m)']['value'])
             transceiver_info_dict['nominal_bit_rate'] = "Not supported for CMIS cables"
@@ -1052,7 +1070,7 @@ class Sfp(SfpBase):
             if self.dom_rx_tx_power_bias_supported: #not implement
                 dom_channel_monitor_raw = self._read_eeprom_specific_bytes(QSFP_DD_CHANNL_RX_LOS_STATUS['offset'], QSFP_DD_CHANNL_RX_LOS_STATUS['width'], QSFP_DD_CHANNL_RX_LOS_STATUS['page'])
                 if dom_channel_monitor_raw is not None:
-                    rx_los_data = int(dom_channel_monitor_raw[0], 8)
+                    rx_los_data = int(dom_channel_monitor_raw[0], 16)
                     rx_los_list.append(rx_los_data & 0x01 != 0)
                     rx_los_list.append(rx_los_data & 0x02 != 0)
                     rx_los_list.append(rx_los_data & 0x04 != 0)
@@ -1289,7 +1307,7 @@ class Sfp(SfpBase):
                 if sfpd_obj is None:
                     return None
 
-                if dom_tx_bias_power_supported:
+                if self.dom_tx_bias_power_supported:
                     dom_tx_bias_raw = self._read_eeprom_specific_bytes(QSFP_DD_TX_BIAS['offset'], QSFP_DD_TX_BIAS['width'], QSFP_DD_TX_BIAS['page'])
                     if dom_tx_bias_raw is not None:
                         dom_tx_bias_data = sfpd_obj.parse_dom_tx_bias(dom_tx_bias_raw, 0)
@@ -1513,3 +1531,40 @@ class Sfp(SfpBase):
         transceiver_dom_info_dict = self.get_transceiver_info()
         return transceiver_dom_info_dict.get("serial", "N/A")
 
+    def get_status(self):
+        """
+        Retrieves the operational status of the device
+        Returns:
+            A boolean value, True if device is operating properly, False if not
+        """
+        return self.get_presence() and not self.get_reset_status()
+
+    def get_position_in_parent(self):
+        """
+        Returns:
+            Temp return 0
+        """
+        return 0
+
+    def is_replaceable(self):
+        """
+        Retrieves if replaceable
+        Returns:
+            A boolean value, True if replaceable
+        """
+        return True
+
+    def get_error_description(self):
+        """
+        Get error description
+
+        Args:
+            error_code: The error code returned by _get_error_code
+
+        Returns:
+            The error description
+        """
+        if self.get_presence():
+            return self.SFP_STATUS_OK
+        else:
+            return self.SFP_STATUS_UNPLUGGED

@@ -123,7 +123,7 @@ class Chassis(ChassisBase):
         """
         return self._eeprom.get_mac()
 
-    def get_serial_number(self):
+    def get_serial(self):
         """
         Retrieves the hardware serial number for the chassis
         Returns:
@@ -240,3 +240,86 @@ class Chassis(ChassisBase):
             sfp.reinit()
 
         return True, ret_dict
+
+    def initizalize_system_led(self):
+        self.system_led = ""
+        return True
+
+    def set_status_led(self, color):
+        """
+        Sets the state of the system LED
+
+        Args:
+            color: A string representing the color with which to set the
+                   system LED
+
+        Returns:
+            bool: True if system LED state is set successfully, False if not
+        """
+        self.system_led = color
+        return True
+
+    def get_status_led(self):
+        """
+        Gets the state of the system LED
+
+        Returns:
+            A string, one of the valid LED color strings which could be vendor
+            specified.
+        """
+        return self.system_led
+
+
+    def get_presence(self):
+        """
+        Retrieves the presence of the Chassis
+        Returns:
+            bool: True if Chassis is present, False if not
+        """
+        return True
+
+    def get_model(self):
+        """
+        Retrieves the model number (or part number) of the device
+        Returns:
+            string: Model/part number of device
+        """
+        return self._eeprom.get_model()
+
+    def get_status(self):
+        """
+        Retrieves the operational status of the device
+        Returns:
+            A boolean value, True if device is operating properly, False if not
+        """
+        return True
+
+    def get_position_in_parent(self):
+        """
+        Retrieves 1-based relative physical position in parent device. If the agent cannot determine the parent-relative position
+        for some reason, or if the associated value of entPhysicalContainedIn is '0', then the value '-1' is returned
+        Returns:
+            integer: The 1-based relative physical position in parent device or -1 if cannot determine the position
+        """
+        return -1
+
+    def is_replaceable(self):
+        """
+        Indicate whether this device is replaceable.
+        Returns:
+            bool: True if it is replaceable.
+        """
+        return False
+
+    def get_revision(self):
+        """
+        Retrieves the hardware revision of the device
+
+        Returns:
+            string: Revision value of device
+        """
+
+        return '0'
+
+    def get_thermal_manager(self):
+        raise NotImplementedError

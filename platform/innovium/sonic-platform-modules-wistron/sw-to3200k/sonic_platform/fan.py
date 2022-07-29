@@ -131,10 +131,11 @@ class Fan(FanBase):
             else:
                 return 0
         elif self.get_presence():
-            path= "{}/fan{}_input".format(FAN_PATH, self.fan_tray_index + 1 + self.fan_index * 10)
+            path= "{}/fan_duty_cycle_percentage".format(FAN_PATH)
             speed=self.__read_txt_file(path)
             if speed is None:
                 return 0
+            return int(int(speed)*100/255)
 
         return int(speed)
 
@@ -279,7 +280,7 @@ class Fan(FanBase):
             integer: The 1-based relative physical position in parent device
             or -1 if cannot determine the position
         """
-        return (self.fan_tray_index + 1) \
+        return (self.fan_tray_index * 2 + self.fan_index + 1) \
             if not self.is_psu_fan else (self.psu_index + 1)
 
     def is_replaceable(self):
